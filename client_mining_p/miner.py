@@ -4,9 +4,7 @@ import requests
 import sys
 import json
 
-difficulty = 6
-
-def valid_proof(block_string, proof):
+def valid_proof(block_string, proof, difficulty):
     """
     Validates the Proof:  Does hash(block_string, proof) contain 6
     leading zeroes?  Return true if the proof is valid
@@ -22,7 +20,7 @@ def valid_proof(block_string, proof):
     return guess_hash[:difficulty] == "0" * difficulty
 
 from time import time
-def proof_of_work(block):
+def proof_of_work(block, difficulty):
     """
     Simple Proof of Work Algorithm
     Stringify the block and look for a proof.
@@ -34,7 +32,7 @@ def proof_of_work(block):
     proof = 0
     print("Proof starting...")
     start = time()
-    while valid_proof(block_string, proof) is False:
+    while valid_proof(block_string, proof, difficulty) is False:
         proof += 1
     end = time()
     print(f"Proof finished in {end - start} seconds.")
@@ -70,7 +68,7 @@ if __name__ == '__main__':
             break
 
         # TODO: Get the block from `data` and use it to look for a new proof
-        new_proof = proof_of_work(data.get("block"))
+        new_proof = proof_of_work(data.get("block"), data.get("difficulty"))
 
         # When found, POST it to the server {"proof": new_proof, "id": id}
         post_data = {"proof": new_proof, "id": id}
