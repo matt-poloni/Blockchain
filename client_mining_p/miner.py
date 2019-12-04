@@ -4,7 +4,7 @@ import requests
 import sys
 import json
 
-difficulty = 3
+difficulty = 6
 
 def valid_proof(block_string, proof):
     """
@@ -21,6 +21,7 @@ def valid_proof(block_string, proof):
     guess_hash = hashlib.sha256(guess).hexdigest()
     return guess_hash[:difficulty] == "0" * difficulty
 
+from time import time
 def proof_of_work(block):
     """
     Simple Proof of Work Algorithm
@@ -29,14 +30,14 @@ def proof_of_work(block):
     in an effort to find a number that is a valid proof
     :return: A valid proof for the provided block
     """
-    print("Proof starting...")
     block_string = json.dumps(block, sort_keys=True)
     proof = 0
+    print("Proof starting...")
+    start = time()
     while valid_proof(block_string, proof) is False:
         proof += 1
-        if proof % 1000000 == 0:
-            print(proof)
-    print("Proof finished")
+    end = time()
+    print(f"Proof finished in {end - start} seconds.")
 
     return proof
 
@@ -82,6 +83,6 @@ if __name__ == '__main__':
         # Otherwise, print the message from the server.
         if data.get('message') == 'New Block Forged':
             coins += 1
-            print(f"{coins} coins mined so far.")
+            print(f"{coins} coins mined so far.\n--------------------")
         else:
             print(data.get('message'))
