@@ -9,15 +9,13 @@ from uuid import uuid4
 from flask import Flask, jsonify, request
 
 
-DIFFICULTY = 6
+DIFFICULTY = 3
 
 
 class Blockchain(object):
     def __init__(self):
         self.chain = []
         self.current_transactions = []
-
-        # Create the genesis block
         self.new_block(previous_hash='===============', proof=100)
 
     def new_block(self, proof, previous_hash=None):
@@ -43,12 +41,8 @@ class Blockchain(object):
             'proof': proof,
             'previous_hash': previous_hash or self.hash(self.chain[-1])
         }
-
-        # Reset the current list of transactions
         self.current_transactions = []
-        # Append the chain to the block
         self.chain.append(block)
-        # Return the new block
         return block
 
     def hash(self, block):
@@ -58,28 +52,8 @@ class Blockchain(object):
         :param block": <dict> Block
         "return": <str>
         """
-
-        # Use json.dumps to convert json into a string
-        # Use hashlib.sha256 to create a hash
-        # It requires a `bytes-like` object, which is what
-        # .encode() does.
-        # It convertes the string to bytes.
-        # We must make sure that the Dictionary is Ordered,
-        # or we'll have inconsistent hashes
-
-        # TODO: Create the block_string
         block_string = json.dumps(block, sort_keys=True).encode()
-
-        # TODO: Hash this string using sha256
         hash = hashlib.sha256(block_string).hexdigest()
-
-        # By itself, the sha256 function returns the hash in a raw string
-        # that will likely include escaped characters.
-        # This can be hard to read, but .hexdigest() converts the
-        # hash to a string of hexadecimal characters, which is
-        # easier to work with and understand
-
-        # TODO: Return the hashed block string in hexadecimal format
         return hash
 
     @property
@@ -115,20 +89,29 @@ node_identifier = str(uuid4()).replace('-', '')
 blockchain = Blockchain()
 
 
-@app.route('/mine', methods=['GET'])
+@app.route('/mine', methods=['POST'])
 def mine():
-    # Run the proof of work algorithm to get the next proof
-    proof = blockchain.proof_of_work(blockchain.last_block)
+    # Pull data out of request
+    data = request.get_json()
+    if data is None or "proof" not in data or "id" not in data:
+        return(jsonify("Both 'proof' and 'id' must be present in the request."), 400)
 
-    # Forge the new Block by adding it to the chain with the proof
-    previous_hash = blockchain.hash(blockchain.last_block)
-    new_block = blockchain.new_block(proof, previous_hash)
-
-    response = {
-        'block': new_block
-    }
-
-    return jsonify(response), 200
+    block_string = json.dumps(blockchain.last_block, sort_keys=True)
+    proof = data['proof']
+    print('PROOF:',proof)
+    if blockchain.valid_proof(block_string, proof):
+        # Forge the new Block by adding it to the chain with the proof
+        previous_hash = blockchain.hash(blockchain.last_block)
+        blockchain.new_block(proof, previous_hash)
+        response = {
+            'message': "New Block Forged"
+        }
+        return jsonify(response), 201
+    else:
+        response = {
+          'message': "Failed to create new block"
+        }
+        return jsonify(response), 400
 
 
 @app.route('/chain', methods=['GET'])
