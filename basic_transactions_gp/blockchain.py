@@ -110,8 +110,9 @@ class Blockchain(object):
     def user_balance(self, user, transactions):
         balance = 0
         for trx in transactions:
-            balance += int(trx['recipient'] == user)
-            balance -= int(trx['sender'] == user)
+            amt = trx['amount']
+            balance += int(trx['recipient'] == user) * amt
+            balance -= int(trx['sender'] == user) * amt
         return balance
 
 from flask_cors import CORS
