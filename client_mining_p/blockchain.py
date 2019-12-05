@@ -91,10 +91,16 @@ blockchain = Blockchain()
 
 @app.route('/mine', methods=['POST'])
 def mine():
+    try:
+        data = request.json()
+    except ValueError:
+        return jsonify({"message": "Non-json response"}), 400
+    
     # Pull data out of request
     data = request.get_json()
-    if data is None or not all(keys in data for keys in ["proof", "id", "index"]):
-        return jsonify({"message": "All of 'proof', 'id', and 'index' must be present in the request."}), 400
+    required = ["proof", "id", "index"]
+    if data is None or not all(keys in data for keys in required):
+        return jsonify({"message": "At least one of 'proof', 'id', and/or 'index' is missing"}), 400
     
     last = blockchain.last_block
     if (index := data["index"]) <= last["index"]:
