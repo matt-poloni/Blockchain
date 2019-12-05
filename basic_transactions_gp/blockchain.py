@@ -94,7 +94,6 @@ class Blockchain(object):
           "amount": amount
         }
         self.current_transactions.append(transaction)
-        print(self.current_transactions)
 
 
 # Instantiate our Node
