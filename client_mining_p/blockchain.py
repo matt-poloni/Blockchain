@@ -79,6 +79,7 @@ class Blockchain(object):
         return guess_hash[:DIFFICULTY] == "0" * DIFFICULTY
 
 
+
 # Instantiate our Node
 app = Flask(__name__)
 

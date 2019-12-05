@@ -17,6 +17,7 @@ class Blockchain(object):
         self.chain = []
         self.current_transactions = []
         self.new_block(previous_hash='===============', proof=100)
+        self.next_transaction = 1
 
     def new_block(self, proof, previous_hash=None):
         """
@@ -89,15 +90,34 @@ class Blockchain(object):
             :return: <int> The index of the `block` that will hold this transaction
         """
         transaction = {
+          "id": self.next_transaction,
           "sender": sender,
           "recipient": recipient,
           "amount": amount
         }
+        self.next_transaction += 1
         self.current_transactions.append(transaction)
+    
+    def user_transactions(self, user):
+        chain = [*self.chain, {'transactions': self.current_transactions}]
+        transactions = []
+        for link in chain:
+            for trx in link['transactions']:
+                if any(v == user for v in [trx['sender'], trx['recipient'] ]):
+                    transactions.append(trx)
+        return transactions
+    
+    def user_balance(self, user, transactions):
+        balance = 0
+        for trx in transactions:
+            balance += int(trx['recipient'] == user)
+            balance -= int(trx['sender'] == user)
+        return balance
 
-
+from flask_cors import CORS
 # Instantiate our Node
 app = Flask(__name__)
+CORS(app)
 
 # Generate a globally unique address for this node
 node_identifier = str(uuid4()).replace('-', '')
@@ -194,6 +214,16 @@ def post_transaction():
       "block": last
     }
     return jsonify(response), 201
+
+@app.route('/transactions/user/<user>', methods=['GET'])
+def get_transactions(user):
+    transactions = blockchain.user_transactions(user)
+    balance = blockchain.user_balance(user, transactions)
+    response = {
+      "transactions": transactions,
+      "balance": balance
+    }
+    return jsonify(response), 200
 
 # Run the program on port 5000
 if __name__ == '__main__':
