@@ -91,11 +91,12 @@ blockchain = Blockchain()
 
 @app.route('/mine', methods=['POST'])
 def mine():
+    # Handle non-json responses
     try:
         data = request.get_json()
     except ValueError:
         response = {
-          "message": "Non-json response"
+          "message": "Non-JSON response"
         }
         return jsonify(response), 400
     
@@ -107,6 +108,7 @@ def mine():
         }
         return jsonify(response), 400
     
+    # Check if block's already been forged
     last = blockchain.last_block
     if (index := data["index"]) <= last["index"]:
         response = {
