@@ -92,19 +92,27 @@ blockchain = Blockchain()
 @app.route('/mine', methods=['POST'])
 def mine():
     try:
-        data = request.json()
+        data = request.get_json()
     except ValueError:
-        return jsonify({"message": "Non-json response"}), 400
+        response = {
+          "message": "Non-json response"
+        }
+        return jsonify(response), 400
     
     # Pull data out of request
-    data = request.get_json()
     required = ["proof", "id", "index"]
     if data is None or not all(keys in data for keys in required):
-        return jsonify({"message": "At least one of 'proof', 'id', and/or 'index' is missing"}), 400
+        response = {
+          "message": "At least one of 'proof', 'id', and/or 'index' is missing"
+        }
+        return jsonify(response), 400
     
     last = blockchain.last_block
     if (index := data["index"]) <= last["index"]:
-        return jsonify({"message": f"Block {index} Already Forged"}), 409
+        response = {
+          "message": f"Block {index} Already Forged"
+        }
+        return jsonify(response), 409
 
     block_string = json.dumps(last, sort_keys=True)
     proof = data['proof']
@@ -116,12 +124,13 @@ def mine():
         response = {
             'message': "New Block Forged"
         }
-        return jsonify(response), 201
+        status = 201
     else:
         response = {
           'message': "Invalid Block"
         }
-        return jsonify(response), 400
+        status = 400
+    return jsonify(response), status
 
 
 @app.route('/chain', methods=['GET'])
