@@ -93,15 +93,19 @@ blockchain = Blockchain()
 def mine():
     # Pull data out of request
     data = request.get_json()
-    if data is None or not all(keys in data for keys in ["proof", "id"]):
-    # "proof" not in data or "id" not in data:
-        return(jsonify({"message": "Both 'proof' and 'id' must be present in the request."}), 400)
+    if data is None or not all(keys in data for keys in ["proof", "id", "index"]):
+        return jsonify({"message": "All of 'proof', 'id', and 'index' must be present in the request."}), 400
+    
+    last = blockchain.last_block
+    if (index := data["index"]) <= last["index"]:
+        return jsonify({"message": f"Block {index} Already Forged"}), 409
 
-    block_string = json.dumps(blockchain.last_block, sort_keys=True)
+    block_string = json.dumps(last, sort_keys=True)
     proof = data['proof']
+    print(data["index"], last["index"])
     if blockchain.valid_proof(block_string, proof):
         # Forge the new Block by adding it to the chain with the proof
-        previous_hash = blockchain.hash(blockchain.last_block)
+        previous_hash = blockchain.hash(last)
         blockchain.new_block(proof, previous_hash)
         response = {
             'message': "New Block Forged"
@@ -109,7 +113,7 @@ def mine():
         return jsonify(response), 201
     else:
         response = {
-          'message': "Failed to create new block"
+          'message': "Invalid Block"
         }
         return jsonify(response), 400
 
