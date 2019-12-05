@@ -78,6 +78,24 @@ class Blockchain(object):
 
         return guess_hash[:DIFFICULTY] == "0" * DIFFICULTY
 
+    def new_transaction(self, sender, recipient, amount):
+        """
+        Create a method in the `Blockchain` class called `new_transaction` 
+        that adds a new transaction to the list of transactions:
+
+            :param sender: <str> Address of the Recipient
+            :param recipient: <str> Address of the Recipient
+            :param amount: <int> Amount
+            :return: <int> The index of the `block` that will hold this transaction
+        """
+        transaction = {
+          "sender": sender,
+          "recipient": recipient,
+          "amount": amount
+        }
+        self.current_transactions.append(transaction)
+        print(self.current_transactions)
+
 
 # Instantiate our Node
 app = Flask(__name__)
@@ -118,11 +136,11 @@ def mine():
 
     block_string = json.dumps(last, sort_keys=True)
     proof = data['proof']
-    print(data["index"], last["index"])
     if blockchain.valid_proof(block_string, proof):
         # Forge the new Block by adding it to the chain with the proof
         previous_hash = blockchain.hash(last)
         blockchain.new_block(proof, previous_hash)
+        blockchain.new_transaction("0", data["id"], 1)
         response = {
             'message': "New Block Forged"
         }
@@ -151,6 +169,32 @@ def last():
     }
     return jsonify(response), 200
 
+@app.route('/transactions/new', methods=['POST'])
+def post_transaction():
+    # Handle non-json responses
+    try:
+        data = request.get_json()
+    except ValueError:
+        response = {
+          "message": "Non-JSON response"
+        }
+        return jsonify(response), 400
+    
+    # Pull data out of request
+    required = ["sender", "recipient", "amount"]
+    if data is None or not all(keys in data for keys in required):
+        response = {
+          "message": "At least one of 'sender', 'recipient', and/or 'amount' is missing"
+        }
+        return jsonify(response), 400
+    blockchain.new_transaction(data["sender"], data["recipient"], data["amount"])
+
+    last = blockchain.last_block
+    response = {
+      "block_index": last["index"],
+      "block": last
+    }
+    return jsonify(response), 201
 
 # Run the program on port 5000
 if __name__ == '__main__':
