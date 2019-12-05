@@ -81,7 +81,6 @@ class Blockchain(object):
 
 # Instantiate our Node
 app = Flask(__name__)
-app.run(debug=True)
 
 # Generate a globally unique address for this node
 node_identifier = str(uuid4()).replace('-', '')
@@ -94,8 +93,9 @@ blockchain = Blockchain()
 def mine():
     # Pull data out of request
     data = request.get_json()
-    if data is None or "proof" not in data or "id" not in data:
-        return(jsonify("Both 'proof' and 'id' must be present in the request."), 400)
+    if data is None or not all(keys in data for keys in ["proof", "id"]):
+    # "proof" not in data or "id" not in data:
+        return(jsonify({"message": "Both 'proof' and 'id' must be present in the request."}), 400)
 
     block_string = json.dumps(blockchain.last_block, sort_keys=True)
     proof = data['proof']

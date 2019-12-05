@@ -81,6 +81,6 @@ if __name__ == '__main__':
         # Otherwise, print the message from the server.
         if data.get('message') == 'New Block Forged':
             coins += 1
-            print(f"{coins} coins mined so far.\n--------------------")
+            print(f"{coins} coins mined so far.\n====================")
         else:
-            print(data.get('message'))
+            print(data.get('message'),"\n--------------------")
